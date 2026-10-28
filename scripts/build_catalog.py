@@ -77,6 +77,33 @@ def safe_relations(value):
         if links: result[video]=links[:10]
     return result
 
+def safe_channel_url(value):
+    """Only link an explicitly provided channel/publisher URL, never guess an outlet."""
+    value=str(value or '').strip()
+    u=urlparse(value)
+    if u.scheme!='https': return ''
+    if u.hostname in ('www.youtube.com','youtube.com','m.youtube.com','www.aparat.com','aparat.com') and u.path not in ('','/'):
+        return value[:500]
+    if u.hostname=='pendar.io' and u.path.startswith(('/media/','/figures/','/entity/')):
+        return value[:500]
+    return ''
+
+def editorial_description(v):
+    """An evidence-bound short introduction; no invented summary or media attribution."""
+    description=clean_text(v.get('summary_fa') or v.get('description_fa'),1900)
+    if description:
+        return description
+    title=v.get('title','ویدئو')
+    names='، '.join(p['name_fa'] for p in v.get('people',[])[:3])
+    topic=clean_text(v.get('topic_fa'),200)
+    intro='این صفحه به ویدئوی «'+title+'» اختصاص دارد.'
+    if topic and topic not in title:
+        intro+=' موضوع ثبت‌شده برای آن «'+topic+'» است.'
+    if names:
+        intro+=' این اثر در آرشیو پندار با '+names+' مرتبط شده است؛ صفحهٔ هر چهره، اطلاعات و مطالب دیگر مرتبط با او را در اختیار می‌گذارد.'
+    intro+=' ویدئو از منبع اصلی در یوتیوب پخش می‌شود.'
+    return intro
+
 def normalize(figures,studio_rows=None,relationships=None):
     if not isinstance(figures,dict) or not isinstance(figures.get('figures'),list):
         raise ValueError('Source figures.json missing figures[]')
@@ -106,13 +133,25 @@ def normalize(figures,studio_rows=None,relationships=None):
                       'title':title,'published_at':date,
                       'thumbnail':safe_image(v.get('thumbnail')) or 'https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg',
                       'source_type':clean_text(v.get('source_type'),32),
-                      'topic_fa':'','summary_fa':'','recap_fa':'',
+                      'topic_fa':clean_text(v.get('topic_fa'),200),
+                      'summary_fa':clean_text(v.get('summary_fa') or v.get('description_fa') or v.get('video_description'),1900),
+                      'recap_fa':'',
+                      'channel_name':clean_text(v.get('channel_name') or v.get('channel_title') or v.get('publisher_name') or v.get('media_name'),140),
+                      'channel_url':safe_channel_url(v.get('channel_url') or v.get('publisher_url') or v.get('media_url')),
                       'studio_id':studio.get(vid,''),'people':[],
                       'related_links':relations.get(vid,[])}
                 by_id[vid]=item
             else:
                 if date>item['published_at']: item['published_at']=date
                 if item['source_type']=='hosted' and v.get('source_type')=='official': item['source_type']='official'
+            if not item.get('channel_name'):
+                item['channel_name']=clean_text(v.get('channel_name') or v.get('channel_title') or v.get('publisher_name') or v.get('media_name'),140)
+            if not item.get('channel_url'):
+                item['channel_url']=safe_channel_url(v.get('channel_url') or v.get('publisher_url') or v.get('media_url'))
+            if not item['topic_fa'] and v.get('topic_fa'):
+                item['topic_fa']=clean_text(v.get('topic_fa'),200)
+            if not item['summary_fa'] and (v.get('description_fa') or v.get('video_description')):
+                item['summary_fa']=clean_text(v.get('description_fa') or v.get('video_description'),1900)
             if not item['recap_fa'] and v.get('recap_fa'):
                 item['recap_fa']=clean_text(v.get('recap_fa'),1100)
                 item['summary_fa']=clean_text(v.get('summary_fa') or v.get('recap_fa'),1900)
@@ -125,24 +164,37 @@ def normalize(figures,studio_rows=None,relationships=None):
     return sorted(by_id.values(),key=lambda x:(x['published_at'],x['id']),reverse=True)
 
 def detail_page(v):
+    """Server-render the description and links so JS/SEO is not a prerequisite."""
     vid=v['id']
     title=html.escape(v['title'],quote=True)
-    description=html.escape((v.get('summary_fa') or 'ویدئو، منبع اصلی و پیوندهای معتبر مرتبط')[:155],quote=True)
+    summary=editorial_description(v)
+    description=html.escape(summary[:155],quote=True)
     thumb=html.escape(v['thumbnail'],quote=True)
     original=html.escape(v['url'],quote=True)
     canonical=SITE+'video/'+vid+'/'
     metadata={'@context':'https://schema.org','@type':'VideoObject','name':v['title'],
-              'description':v.get('summary_fa') or v['title'],
-              'thumbnailUrl':v['thumbnail'],'url':canonical,
+              'description':summary[:750], 'thumbnailUrl':v['thumbnail'],'url':canonical,
               'embedUrl':'https://www.youtube-nocookie.com/embed/'+vid}
     if re.match(r'^\d{4}-\d{2}-\d{2}',v['published_at']):
         metadata['uploadDate']=v['published_at']
     schema=json.dumps(metadata,ensure_ascii=False).replace('<','\\u003c')
     people=html.escape('، '.join(p['name_fa'] for p in v['people'][:4]))
     date=html.escape(v['published_at'][:10])
-    return f"""<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="{description}"><meta property="og:type" content="video.other"><meta property="og:title" content="{title}"><meta property="og:image" content="{thumb}"><link rel="canonical" href="{canonical}"><link rel="stylesheet" href="/videos/styles.css"><title>{title} | ویدئوها</title><script type="application/ld+json">{schema}</script></head>
+    p_links=[]
+    for p in v['people']:
+        handle=p['handle']
+        if HANDLE.fullmatch(handle):
+            url='https://pendar.io/figures/#/figure/'+handle
+            p_links.append('<a class="context-link" href="'+html.escape(url,quote=True)+'"><span>👤</span><strong>'+html.escape(p['name_fa'])+'</strong><small>پرونده و مطالب این چهره در پندار</small></a>')
+    people_section='<section class="detail-context"><h2>چهره‌های مرتبط</h2><div class="context-grid">'+''.join(p_links)+'</div></section>' if p_links else ''
+    channel_name=html.escape(v.get('channel_name') or '',quote=True)
+    channel_url=html.escape(v.get('channel_url') or '',quote=True)
+    channel_section=('<a class="context-link" href="'+channel_url+'" target="_blank" rel="noopener noreferrer"><span>📺</span><strong>'+channel_name+'</strong><small>صفحهٔ رسانه یا کانال معرفی‌شده در اطلاعات منبع</small></a>' if channel_url and channel_name else '')
+    media_section='<section class="detail-context"><h2>رسانه و منبع انتشار</h2><div class="context-grid">'+channel_section+'<a class="context-link" href="'+original+'" target="_blank" rel="noopener noreferrer"><span>▶</span><strong>منبع اصلی ویدئو</strong><small>مشاهده در یوتیوب</small></a></div></section>'
+    summary_html=html.escape(summary)
+    return f"""<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="{description}"><meta property="og:type" content="video.other"><meta property="og:title" content="{title}"><meta property="og:description" content="{description}"><meta property="og:image" content="{thumb}"><link rel="canonical" href="{canonical}"><link rel="stylesheet" href="/videos/styles.css"><title>{title} | ویدئوها</title><script type="application/ld+json">{schema}</script></head>
 <body><header class="masthead"><div class="wrap mast"><a class="mark" href="/videos/"><span class="mark-icon">▶</span><span>ویدئوها<small>آرشیو مستقل نیمانیا</small></span></a><nav><a href="/videos/">ویدئوها</a><a href="https://pendar.io/">پندار</a><a href="https://nimania.github.io/jan-kalam/">جان کلام</a><a href="https://nimania.github.io/badbadak/">بادبادک</a><a href="https://nimania.github.io/pishkhan/">پیشخوان کتاب</a></nav></div></header>
-<main class="wrap"><article class="detail"><a class="back" href="/videos/">بازگشت به فهرست</a><span class="eyebrow">ویدئو · منبع اصلی</span><h1>{title}</h1><p class="meta">{date} · {people}</p><div class="player"><iframe src="https://www.youtube-nocookie.com/embed/{vid}" title="{title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><p><a class="back" href="{original}" target="_blank" rel="noopener noreferrer">ویدئوی اصلی در یوتیوب</a></p><div id="detail-dynamic"></div></article></main>
+<main class="wrap"><article class="detail"><a class="back" href="/videos/">بازگشت به فهرست</a><span class="eyebrow">ویدئو · منبع اصلی</span><h1>{title}</h1><p class="meta">{date} · {people}</p><div class="player"><iframe src="https://www.youtube-nocookie.com/embed/{vid}" title="{title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><section class="detail-summary"><h2>دربارهٔ این ویدئو</h2><p>{summary_html}</p></section>{people_section}{media_section}<div id="detail-dynamic"></div></article></main>
 <footer class="footer"><div class="wrap"><span>ویدئوها · نیمانیا</span><span>مالکیت ویدئو متعلق به ناشر اصلی است</span></div></footer><script src="/videos/detail.js" defer></script></body></html>"""
 
 def build(figures_source,studio_source,out,allow_empty=False,relations=None):
