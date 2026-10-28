@@ -61,4 +61,34 @@ class CatalogueTests(unittest.TestCase):
   self.assertEqual(mod.safe_channel_url('https://evil.example/@example'),'')
   self.assertEqual(mod.safe_channel_url('javascript:alert(1)'),'')
 
+
+ def test_channel_one_is_media_not_a_person(self):
+  self.figures['figures'].append({
+   'handle':'source-channel-one-tv',
+   'name_fa':'شبکه یک (Channel One TV)',
+   'role_fa':'شبکه تلویزیونی و رسانه',
+   'directory':False,
+   'youtube_videos':[{'id':'abcdefghijk','url':'https://www.youtube.com/watch?v=abcdefghijk','title':'گفتگو','channel_url':'https://www.youtube.com/@ChanelOneTVIranian'}]
+  })
+  rows=mod.normalize(self.figures)
+  self.assertEqual(len(rows),1)
+  self.assertFalse(any(p['handle']=='source-channel-one-tv' for p in rows[0]['people']))
+  self.assertEqual(rows[0]['media'][0]['name_fa'],'شبکه یک (Channel One TV)')
+  page=mod.detail_page(rows[0])
+  self.assertIn('رسانه و منبع انتشار',page)
+  self.assertIn('شبکه یک (Channel One TV)',page)
+  self.assertNotIn('figure/source-channel-one-tv',page)
+ def test_specific_video_host_and_guest(self):
+  extra={'abcdefghijk':[{'name_fa':'محمد منظرپور','role':'host','handle':'mohammad-manzarpour'},
+                         {'name_fa':'بهمن جلدی','role':'guest','handle':'bahman-jeldi'}]}
+  row=mod.normalize(self.figures,credits=extra)[0]
+  page=mod.detail_page(row)
+  self.assertIn('میزبان برنامه',page)
+  self.assertIn('مهمان برنامه',page)
+  self.assertIn('محمد منظرپور',page)
+  self.assertIn('بهمن جلدی',page)
+  self.assertIn('https://pendar.io/figures/#/figure/mohammad-manzarpour',page)
+  self.assertIn('https://pendar.io/figures/#/figure/bahman-jeldi',page)
+  self.assertEqual(mod.normalize(self.figures)[0]['credits'],[])
+
 if __name__=='__main__':unittest.main()
