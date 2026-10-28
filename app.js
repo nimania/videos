@@ -26,7 +26,7 @@
   const item=all.find(x=>sameHandle(x.handle,personHandle||mediaHandle));
   const name=item?.name_fa||'';
   const heading=mediaHandle?'ویدئوهای رسانه':'ویدئوهای مرتبط با چهره';
-  const href=personHandle?'https://pendar.io/figures/#/figure/'+encodeURIComponent(personHandle):
+  const href=personHandle?'https://pendar.io/@'+encodeURIComponent(personHandle)+'/':
     '/videos/media/'+encodeURIComponent(mediaHandle)+'/';
   const linkLabel=personHandle?'پروندهٔ این چهره در پندار':'پروندهٔ رسانه و آرشیو آن';
   $('context-banner').innerHTML='<b>'+esc(heading+(name?' · '+name:''))+'</b><span>'+
