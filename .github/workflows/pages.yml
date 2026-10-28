@@ -3,11 +3,12 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['index.html', 'styles.css', 'app.js', 'detail.js', 'scripts/**', 'data/relations.json', '.github/workflows/pages.yml']
+    paths: ['index.html', 'styles.css', 'app.js', 'detail.js', 'scripts/**', 'tests/**', 'data/relations.json', '.github/workflows/pages.yml']
   schedule:
     - cron: '13,43 * * * *'
 permissions:
   contents: read
+  issues: write
   pages: write
   id-token: write
 concurrency:
@@ -25,8 +26,23 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Build independent static snapshot
         run: python scripts/build_catalog.py --out site
+      - name: Inspect generated archive
+        run: |
+          test -s site/index.html
+          test -s site/data/videos.json
+          python -c 'import json; x=json.load(open("site/data/videos.json")); assert len(x["videos"]) > 0; print("Archive OK:", len(x["videos"]), "videos")'
+      - name: Enable Pages if not already configured
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/pages" >/dev/null 2>&1; then
+            echo 'Pages already enabled'
+          else
+            echo 'Trying Pages API enablement'
+            gh api -X POST "repos/$GITHUB_REPOSITORY/pages" -f build_type=workflow || echo '::warning::Pages could not be enabled automatically; select GitHub Actions in Settings > Pages'
+          fi
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: site
   deploy:
@@ -38,3 +54,22 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+  report:
+    if: always()
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report first publication progress
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        run: |
+          printf 'GitHub Pages deployment attempt: https://github.com/%s/actions/runs/%s\n\nBuild: %s\nDeploy: %s\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$BUILD_RESULT" "$DEPLOY_RESULT" > /tmp/status.md
+          if [ "$DEPLOY_RESULT" = 'success' ]; then
+            printf '\nPublished: https://nimania.github.io/videos/\n' >> /tmp/status.md
+          else
+            printf '\nPlease inspect the failed step of the linked run; Pages may require Settings → Pages → Source: GitHub Actions.\n' >> /tmp/status.md
+          fi
+          gh issue comment 1 --repo "$GITHUB_REPOSITORY" --body-file /tmp/status.md
+          if [ "$DEPLOY_RESULT" = 'success' ]; then gh issue close 1 --repo "$GITHUB_REPOSITORY" || true; fi
