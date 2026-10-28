@@ -42,8 +42,8 @@ class CatalogueTests(unittest.TestCase):
   page=mod.detail_page(row)
   self.assertIn('دربارهٔ این ویدئو',page)
   self.assertIn('موضوع اول',page)
-  self.assertIn('https://pendar.io/figures/#/figure/person-a',page)
-  self.assertIn('https://pendar.io/figures/#/figure/person-b',page)
+  self.assertIn('https://pendar.io/@person-a/',page)
+  self.assertIn('https://pendar.io/@person-b/',page)
   self.assertIn('رسانه و منبع انتشار',page)
   self.assertIn('منبع اصلی ویدئو',page)
   self.assertIn('schema.org',page)
@@ -86,6 +86,30 @@ class CatalogueTests(unittest.TestCase):
    media_page=(out/'media'/'source-channel-one-tv'/'index.html').read_text(encoding='utf-8')
    self.assertIn('شبکه یک (Channel One TV)',media_page)
    self.assertIn('/videos/video/abcdefghijk/',media_page)
+ def test_youtube_statement_gets_video_perma_page(self):
+  self.figures['figures'].append({
+   'handle':'statement-author','name_fa':'نویسنده',
+   'youtube_videos':[],
+   'posts':[{'id':'youtube-zyxwvutsrqp','platform':'youtube',
+             'url':'https://www.youtube.com/watch?v=zyxwvutsrqp',
+             'video_title':'گفت‌وگوی آرشیوی','published_at':'2026-10-26',
+             'summary_fa':'شرح ثبت شده و مرتبط'}]})
+  rows=mod.normalize(self.figures)
+  self.assertTrue(any(v['id']=='zyxwvutsrqp' for v in rows))
+  self.assertEqual(next(v for v in rows if v['id']=='zyxwvutsrqp')['summary_fa'],'شرح ثبت شده و مرتبط')
+ def test_media_directory_separate_from_people(self):
+  figures=dict(figures=[{
+   'handle':'source-channel-one-tv','name_fa':'شبکه یک (Channel One TV)','directory':False,
+   'youtube_videos':[{'id':'abcdefghijk','url':'https://youtu.be/abcdefghijk','title':'گفت‌وگو'}]}])
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp); fig=p/'figures.json';studio=p/'studio.json';out=p/'out'
+   fig.write_text(json.dumps(figures),encoding='utf-8');studio.write_text('[]')
+   mod.build(str(fig),str(studio),out)
+   directory=(out/'media'/'index.html').read_text(encoding='utf-8')
+   self.assertIn('شبکه یک (Channel One TV)',directory)
+   self.assertIn('/videos/media/source-channel-one-tv/',directory)
+   self.assertIn('https://nimania.github.io/videos/media/',(out/'sitemap.xml').read_text(encoding='utf-8'))
+
  def test_specific_video_host_and_guest(self):
   extra={'abcdefghijk':[{'name_fa':'محمد منظرپور','role':'host','handle':'mohammad-manzarpour'},
                          {'name_fa':'بهمن جلدی','role':'guest','handle':'bahman-jeldi'}]}
@@ -95,8 +119,8 @@ class CatalogueTests(unittest.TestCase):
   self.assertIn('مهمان برنامه',page)
   self.assertIn('محمد منظرپور',page)
   self.assertIn('بهمن جلدی',page)
-  self.assertIn('https://pendar.io/figures/#/figure/mohammad-manzarpour',page)
-  self.assertIn('https://pendar.io/figures/#/figure/bahman-jeldi',page)
+  self.assertIn('https://pendar.io/@mohammad-manzarpour/',page)
+  self.assertIn('https://pendar.io/@bahman-jeldi/',page)
   self.assertEqual(mod.normalize(self.figures)[0]['credits'],[])
 
 if __name__=='__main__':unittest.main()
