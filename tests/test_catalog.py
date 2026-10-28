@@ -36,4 +36,29 @@ class CatalogueTests(unittest.TestCase):
    fig.write_text('{"figures":[]}')
    with self.assertRaises(ValueError):mod.build(str(fig),str(studio),out)
 
+
+ def test_every_page_has_context_and_profile_links(self):
+  row=mod.normalize(self.figures)[0]
+  page=mod.detail_page(row)
+  self.assertIn('دربارهٔ این ویدئو',page)
+  self.assertIn('موضوع اول',page)
+  self.assertIn('https://pendar.io/figures/#/figure/person-a',page)
+  self.assertIn('https://pendar.io/figures/#/figure/person-b',page)
+  self.assertIn('رسانه و منبع انتشار',page)
+  self.assertIn('منبع اصلی ویدئو',page)
+  self.assertIn('schema.org',page)
+ def test_source_media_is_linked_only_when_explicit_and_safe(self):
+  self.figures['figures'][0]['youtube_videos'][0].update({
+   'channel_name':'رسانه آزمایشی',
+   'channel_url':'https://www.youtube.com/@example',
+   'description_fa':'توضیح واقعی منتشرشده در منبع'})
+  row=mod.normalize(self.figures)[0]
+  page=mod.detail_page(row)
+  self.assertIn('رسانه آزمایشی',page)
+  self.assertIn('https://www.youtube.com/@example',page)
+  self.assertIn('توضیح واقعی منتشرشده در منبع',page)
+  self.assertNotIn('این صفحه به ویدئوی',page)
+  self.assertEqual(mod.safe_channel_url('https://evil.example/@example'),'')
+  self.assertEqual(mod.safe_channel_url('javascript:alert(1)'),'')
+
 if __name__=='__main__':unittest.main()
