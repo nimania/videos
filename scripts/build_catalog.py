@@ -163,7 +163,23 @@ def normalize(figures,studio_rows=None,relationships=None,credits=None):
         handle=str(person.get('handle') or '')
         if not HANDLE.fullmatch(handle): continue
         name=clean_text(person.get('name_fa') or person.get('name') or handle,140)
-        records=person.get('youtube_videos') if isinstance(person.get('youtube_videos'),list) else []
+        records=list(person.get('youtube_videos') or []) if isinstance(person.get('youtube_videos'),list) else []
+        # Every public YouTube statement needs a matching video page, including
+        # older recaps outside the 15-video-per-person source catalogue window.
+        for post in person.get('posts') or []:
+            if not isinstance(post,dict) or post.get('platform')!='youtube': continue
+            vid=youtube_id(post.get('id')) or youtube_id(post.get('url'))
+            if not vid or not youtube_id(post.get('url')): continue
+            records.append({
+                'id':vid,'url':post.get('url'),
+                'title':post.get('video_title') or post.get('topic_fa') or post.get('headline_fa') or '',
+                'published_at':post.get('published_at') or '',
+                'thumbnail':post.get('media_url') or post.get('thumbnail') or '',
+                'summary_fa':post.get('summary_fa') or '',
+                'recap_fa':post.get('recap_fa') or '',
+                'topic_fa':post.get('topic_fa') or '',
+                'source_type':post.get('source_type') or 'hosted'
+            })
         for v in records:
             if not isinstance(v,dict): continue
             vid=youtube_id(v.get('id')) or youtube_id(v.get('url'))
