@@ -88,6 +88,44 @@ def safe_channel_url(value):
         return value[:500]
     return ''
 
+def person_or_media(figure):
+    """Source channel records in Pendar are publishers, not human figures."""
+    handle=str(figure.get('handle') or '')
+    role=clean_text(figure.get('role_fa'),120)
+    if handle.startswith('source-') or (
+        figure.get('directory') is False and
+        ('رسانه' in role or 'شبکه' in role or 'کانال' in role)
+    ):
+        return 'media'
+    return 'person'
+
+def media_info(person, video):
+    handle=str(person.get('handle') or '')
+    name=clean_text(person.get('name_fa') or person.get('name') or '',120)
+    channel=safe_channel_url(video.get('channel_url') or video.get('publisher_url'))
+    if handle=='source-channel-one-tv':
+        name='شبکه یک (Channel One TV)'
+        channel=channel or 'https://www.youtube.com/@ChanelOneTVIranian'
+    return {'handle':handle,'name_fa':name,'url':channel}
+
+def safe_credits(raw):
+    """Credits require explicit editorial attribution, never infer from titles."""
+    if not isinstance(raw,dict): return {}
+    result={}
+    for vid,items in raw.items():
+        if not VIDEO_ID.fullmatch(vid) or not isinstance(items,list): continue
+        out=[]
+        for p in items:
+            if not isinstance(p,dict) or p.get('role') not in ('host','guest'): continue
+            name=clean_text(p.get('name_fa'),120)
+            handle=str(p.get('handle') or '')
+            if not name: continue
+            if handle and not HANDLE.fullmatch(handle): continue
+            if (name,p['role']) not in [(a['name_fa'],a['role']) for a in out]:
+                out.append({'name_fa':name,'role':p['role'],'handle':handle})
+        if out:result[vid]=out[:12]
+    return result
+
 def editorial_description(v):
     """An evidence-bound short introduction; no invented summary or media attribution."""
     description=clean_text(v.get('summary_fa') or v.get('description_fa'),1900)
@@ -101,13 +139,19 @@ def editorial_description(v):
         intro+=' موضوع ثبت‌شده برای آن «'+topic+'» است.'
     if names:
         intro+=' این اثر در آرشیو پندار با '+names+' مرتبط شده است؛ صفحهٔ هر چهره، اطلاعات و مطالب دیگر مرتبط با او را در اختیار می‌گذارد.'
+    media_names='، '.join(m['name_fa'] for m in v.get('media',[])[:2])
+    if media_names: intro+=' رسانهٔ منتشرکننده: '+media_names+'.'
+    if v.get('credits'):
+        labelled=['میزبان: '+p['name_fa'] if p['role']=='host' else 'مهمان: '+p['name_fa'] for p in v['credits']]
+        intro+=' '+ '؛ '.join(labelled)+'.'
     intro+=' ویدئو از منبع اصلی در یوتیوب پخش می‌شود.'
     return intro
 
-def normalize(figures,studio_rows=None,relationships=None):
+def normalize(figures,studio_rows=None,relationships=None,credits=None):
     if not isinstance(figures,dict) or not isinstance(figures.get('figures'),list):
         raise ValueError('Source figures.json missing figures[]')
     relations=safe_relations(relationships or {})
+    credit_map=safe_credits(credits or {})
     studio={}
     for r in studio_rows if isinstance(studio_rows,list) else []:
         if not isinstance(r,dict): continue
@@ -138,7 +182,8 @@ def normalize(figures,studio_rows=None,relationships=None):
                       'recap_fa':'',
                       'channel_name':clean_text(v.get('channel_name') or v.get('channel_title') or v.get('publisher_name') or v.get('media_name'),140),
                       'channel_url':safe_channel_url(v.get('channel_url') or v.get('publisher_url') or v.get('media_url')),
-                      'studio_id':studio.get(vid,''),'people':[],
+                      'studio_id':studio.get(vid,''),'people':[],'media':[],
+                      'credits':credit_map.get(vid,[]),
                       'related_links':relations.get(vid,[])}
                 by_id[vid]=item
             else:
@@ -159,7 +204,10 @@ def normalize(figures,studio_rows=None,relationships=None):
                 item['topic_fa']=clean_text(v.get('topic_fa'),200)
             elif not item['summary_fa'] and v.get('summary_fa'):
                 item['summary_fa']=clean_text(v.get('summary_fa'),1900)
-            if not any(p['handle'].lower()==handle.lower() for p in item['people']):
+            if person_or_media(person)=='media':
+                if not any(m['handle'].lower()==handle.lower() for m in item['media']):
+                    item['media'].append(media_info(person,v))
+            elif not any(p['handle'].lower()==handle.lower() for p in item['people']):
                 item['people'].append({'handle':handle,'name_fa':name,
                                        'avatar':safe_image(person.get('avatar'))})
     return sorted(by_id.values(),key=lambda x:(x['published_at'],x['id']),reverse=True)
@@ -179,7 +227,8 @@ def detail_page(v):
     if re.match(r'^\d{4}-\d{2}-\d{2}',v['published_at']):
         metadata['uploadDate']=v['published_at']
     schema=json.dumps(metadata,ensure_ascii=False).replace('<','\\u003c')
-    people=html.escape('، '.join(p['name_fa'] for p in v['people'][:4]))
+    subjects=v.get('credits') or v.get('people') or v.get('media') or []
+    people=html.escape('، '.join(p['name_fa'] for p in subjects[:4]))
     date=html.escape(v['published_at'][:10])
     p_links=[]
     for p in v['people']:
@@ -190,21 +239,41 @@ def detail_page(v):
     people_section='<section class="detail-context"><h2>چهره‌های مرتبط</h2><div class="context-grid">'+''.join(p_links)+'</div></section>' if p_links else ''
     channel_name=html.escape(v.get('channel_name') or '',quote=True)
     channel_url=html.escape(v.get('channel_url') or '',quote=True)
-    channel_section=('<a class="context-link" href="'+channel_url+'" target="_blank" rel="noopener noreferrer"><span>📺</span><strong>'+channel_name+'</strong><small>صفحهٔ رسانه یا کانال معرفی‌شده در اطلاعات منبع</small></a>' if channel_url and channel_name else '')
+    media_cards=[]
+    for medium in v.get('media',[]):
+        name=html.escape(medium['name_fa'])
+        medium_url=html.escape(medium.get('url') or '',quote=True)
+        if medium_url:
+            media_cards.append('<a class="context-link" href="'+medium_url+'" target="_blank" rel="noopener noreferrer"><span>📺</span><strong>'+name+'</strong><small>رسانهٔ منتشرکننده · کانال رسمی</small></a>')
+        else:
+            media_cards.append('<div class="context-link"><span>📺</span><strong>'+name+'</strong><small>رسانهٔ منتشرکننده</small></div>')
+    channel_section=''.join(media_cards)
+    if not media_cards and channel_url and channel_name:
+        channel_section='<a class="context-link" href="'+channel_url+'" target="_blank" rel="noopener noreferrer"><span>📺</span><strong>'+channel_name+'</strong><small>صفحهٔ رسانه یا کانال معرفی‌شده در اطلاعات منبع</small></a>'
+    credit_cards=[]
+    for credit in v.get('credits',[]):
+        role_name='میزبان' if credit['role']=='host' else 'مهمان'
+        name=html.escape(credit['name_fa'])
+        handle=credit.get('handle') or ''
+        url='https://pendar.io/figures/#/figure/'+handle if HANDLE.fullmatch(handle) else ''
+        start='<a class="context-link" href="'+html.escape(url,quote=True)+'">' if url else '<div class="context-link">'
+        end='</a>' if url else '</div>'
+        credit_cards.append(start+'<span>👤</span><strong>'+name+'</strong><small>'+role_name+' برنامه</small>'+end)
+    credit_section=('<section class="detail-context"><h2>عوامل و شرکت‌کنندگان</h2><div class="context-grid">'+''.join(credit_cards)+'</div></section>') if credit_cards else ''
     media_section='<section class="detail-context"><h2>رسانه و منبع انتشار</h2><div class="context-grid">'+channel_section+'<a class="context-link" href="'+original+'" target="_blank" rel="noopener noreferrer"><span>▶</span><strong>منبع اصلی ویدئو</strong><small>مشاهده در یوتیوب</small></a></div></section>'
     summary_html=html.escape(summary)
     return f"""<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="{description}"><meta property="og:type" content="video.other"><meta property="og:title" content="{title}"><meta property="og:description" content="{description}"><meta property="og:image" content="{thumb}"><link rel="canonical" href="{canonical}"><link rel="stylesheet" href="/videos/styles.css"><title>{title} | ویدئوها</title><script type="application/ld+json">{schema}</script></head>
 <body><header class="masthead"><div class="wrap mast"><a class="mark" href="/videos/"><span class="mark-icon">▶</span><span>ویدئوها<small>آرشیو مستقل نیمانیا</small></span></a><nav><a href="/videos/">ویدئوها</a><a href="https://pendar.io/">پندار</a><a href="https://nimania.github.io/jan-kalam/">جان کلام</a><a href="https://nimania.github.io/badbadak/">بادبادک</a><a href="https://nimania.github.io/pishkhan/">پیشخوان کتاب</a></nav></div></header>
-<main class="wrap"><article class="detail"><a class="back" href="/videos/">بازگشت به فهرست</a><span class="eyebrow">ویدئو · منبع اصلی</span><h1>{title}</h1><p class="meta">{date} · {people}</p><div class="player"><iframe src="https://www.youtube-nocookie.com/embed/{vid}" title="{title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><section class="detail-summary"><h2>دربارهٔ این ویدئو</h2><p>{summary_html}</p></section>{people_section}{media_section}<div id="detail-dynamic"></div></article></main>
+<main class="wrap"><article class="detail"><a class="back" href="/videos/">بازگشت به فهرست</a><span class="eyebrow">ویدئو · منبع اصلی</span><h1>{title}</h1><p class="meta">{date} · {people}</p><div class="player"><iframe src="https://www.youtube-nocookie.com/embed/{vid}" title="{title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><section class="detail-summary"><h2>دربارهٔ این ویدئو</h2><p>{summary_html}</p></section>{credit_section}{people_section}{media_section}<div id="detail-dynamic"></div></article></main>
 <footer class="footer"><div class="wrap"><span>ویدئوها · نیمانیا</span><span>مالکیت ویدئو متعلق به ناشر اصلی است</span></div></footer><script src="/videos/detail.js" defer></script></body></html>"""
 
-def build(figures_source,studio_source,out,allow_empty=False,relations=None):
+def build(figures_source,studio_source,out,allow_empty=False,relations=None,credits=None):
     figures=read_json(figures_source)
     try: studio=read_json(studio_source)
     except Exception as e:
         print('Studio unavailable: '+str(e),file=sys.stderr)
         studio=[]
-    rows=normalize(figures,studio,relations)
+    rows=normalize(figures,studio,relations,credits)
     if not rows and not allow_empty: raise ValueError('Refusing to publish an empty archive')
     out.mkdir(parents=True,exist_ok=True)
     for f in ('index.html','styles.css','app.js','detail.js','.nojekyll'):
@@ -232,6 +301,7 @@ def main():
     parser.add_argument('--allow-empty',action='store_true')
     args=parser.parse_args()
     relations=read_json(str(ROOT/'data'/'relations.json'))
-    build(args.figures,args.studio,args.out,allow_empty=args.allow_empty,relations=relations)
+    credits=read_json(str(ROOT/'data'/'credits.json'))
+    build(args.figures,args.studio,args.out,allow_empty=args.allow_empty,relations=relations,credits=credits)
 
 if __name__=='__main__': main()
