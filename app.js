@@ -11,10 +11,10 @@
  function card(v){
   const image=safeImage(v.thumbnail)||(isId(v.id)?'https://i.ytimg.com/vi/'+v.id+'/hqdefault.jpg':'');
   const link=ROOT+'video/'+encodeURIComponent(v.id)+'/';
-  return '<article class="card"><a href="'+esc(link)+'"><span class="thumb">'+(image?'<img src="'+esc(image)+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<span class="play">▶</span></span></a><div class="card-body"><a class="card-title" href="'+esc(link)+'">'+esc(v.title)+'</a><div class="card-meta">'+esc(date(v.published_at))+' · '+esc((v.people||[]).map(p=>p.name_fa).filter(Boolean).slice(0,2).join('، '))+'</div><div class="tags">'+(v.recap_fa?'<span>جان کلام</span>':'')+(v.source_type==='hosted'?'<span>حضور در برنامه</span>':'<span>ویدئو</span>')+'</div></div></article>';
+  return '<article class="card"><a href="'+esc(link)+'"><span class="thumb">'+(image?'<img src="'+esc(image)+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<span class="play">▶</span></span></a><div class="card-body"><a class="card-title" href="'+esc(link)+'">'+esc(v.title)+'</a><div class="card-meta">'+esc(date(v.published_at))+' · '+esc([...(v.credits||[]).map(p=>p.name_fa),...(v.people||[]).map(p=>p.name_fa),...(v.media||[]).map(m=>m.name_fa)].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).slice(0,3).join('، '))+'</div><div class="tags">'+(v.recap_fa?'<span>جان کلام</span>':'')+((v.media||[]).length?'<span>رسانه</span>':(v.source_type==='hosted'?'<span>حضور در برنامه</span>':'<span>ویدئو</span>'))+'</div></div></article>';
  }
  function render(){
-  const matches=videos.filter(v=>(filter!=='recaps'||Boolean(v.recap_fa))&&(!query||[v.title,v.topic_fa,...(v.people||[]).map(p=>p.name_fa)].join(' ').toLocaleLowerCase('fa').includes(query)));
+  const matches=videos.filter(v=>(filter!=='recaps'||Boolean(v.recap_fa))&&(!query||[v.title,v.topic_fa,...(v.people||[]).map(p=>p.name_fa),...(v.media||[]).map(m=>m.name_fa),...(v.credits||[]).map(p=>p.name_fa)].join(' ').toLocaleLowerCase('fa').includes(query)));
   const pages=Math.max(1,Math.ceil(matches.length/size));page=Math.min(page,pages);
   $('status').textContent=fa(matches.length)+' ویدئو در آرشیو';
   $('video-grid').innerHTML=matches.length?matches.slice((page-1)*size,page*size).map(card).join(''):'<p class="empty">ویدئویی مطابق این جست‌وجو پیدا نشد.</p>';
