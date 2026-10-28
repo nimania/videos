@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['index.html', 'styles.css', 'app.js', 'detail.js', 'scripts/**', 'tests/**', 'data/relations.json', '.github/workflows/pages.yml']
+    paths: ['index.html', 'styles.css', 'app.js', 'detail.js', 'scripts/**', 'tests/**', 'data/relations.json', 'data/credits.json', '.github/workflows/pages.yml']
   schedule:
     - cron: '13,43 * * * *'
 permissions:
