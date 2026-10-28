@@ -31,17 +31,10 @@ jobs:
           test -s site/index.html
           test -s site/data/videos.json
           python -c 'import json; x=json.load(open("site/data/videos.json")); assert len(x["videos"]) > 0; print("Archive OK:", len(x["videos"]), "videos")'
-      - name: Enable Pages if not already configured
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh api "repos/$GITHUB_REPOSITORY/pages" >/dev/null 2>&1; then
-            echo 'Pages already enabled'
-          else
-            echo 'Trying Pages API enablement'
-            gh api -X POST "repos/$GITHUB_REPOSITORY/pages" -f build_type=workflow || echo '::warning::Pages could not be enabled automatically; select GitHub Actions in Settings > Pages'
-          fi
-      - uses: actions/configure-pages@v5
+      - name: Configure or enable GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site
