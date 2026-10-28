@@ -243,7 +243,10 @@ def detail_page(v):
     for medium in v.get('media',[]):
         name=html.escape(medium['name_fa'])
         medium_url=html.escape(medium.get('url') or '',quote=True)
-        if medium_url:
+        handle=medium.get('handle') or ''
+        if HANDLE.fullmatch(handle):
+            media_cards.append('<a class="context-link" href="/videos/media/'+handle+'/"><span>📺</span><strong>'+name+'</strong><small>پروندهٔ رسانه و ویدئوهای آن</small></a>')
+        elif medium_url:
             media_cards.append('<a class="context-link" href="'+medium_url+'" target="_blank" rel="noopener noreferrer"><span>📺</span><strong>'+name+'</strong><small>رسانهٔ منتشرکننده · کانال رسمی</small></a>')
         else:
             media_cards.append('<div class="context-link"><span>📺</span><strong>'+name+'</strong><small>رسانهٔ منتشرکننده</small></div>')
@@ -267,6 +270,18 @@ def detail_page(v):
 <main class="wrap"><article class="detail"><a class="back" href="/videos/">بازگشت به فهرست</a><span class="eyebrow">ویدئو · منبع اصلی</span><h1>{title}</h1><p class="meta">{date} · {people}</p><div class="player"><iframe src="https://www.youtube-nocookie.com/embed/{vid}" title="{title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><section class="detail-summary"><h2>دربارهٔ این ویدئو</h2><p>{summary_html}</p></section>{credit_section}{people_section}{media_section}<div id="detail-dynamic"></div></article></main>
 <footer class="footer"><div class="wrap"><span>ویدئوها · نیمانیا</span><span>مالکیت ویدئو متعلق به ناشر اصلی است</span></div></footer><script src="/videos/detail.js" defer></script></body></html>"""
 
+def media_page(media, rows):
+    """Real publisher archive, distinct from a person profile."""
+    handle=media['handle']
+    name=html.escape(media['name_fa'])
+    source=html.escape(media.get('url') or '',quote=True)
+    title=name+' | رسانه‌ها | ویدئوها'
+    originals=('<p><a class="back" href="'+source+'" target="_blank" rel="noopener noreferrer">کانال رسمی رسانه</a></p>') if source else ''
+    cards=''.join('<a class="related-video" href="/videos/video/'+v['id']+'/"><img loading="lazy" src="https://i.ytimg.com/vi/'+v['id']+'/mqdefault.jpg" alt=""><span>'+html.escape(v['title'])+'</span></a>' for v in rows)
+    return f"""<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="آرشیو ویدئوهای {name} و پیوند به منبع اصلی"><link rel="canonical" href="{SITE}media/{handle}/"><link rel="stylesheet" href="/videos/styles.css"><title>{title}</title></head>
+<body><header class="masthead"><div class="wrap mast"><a class="mark" href="/videos/"><span class="mark-icon">▶</span><span>ویدئوها<small>آرشیو مستقل نیمانیا</small></span></a><nav><a href="/videos/">ویدئوها</a><a href="https://pendar.io/">پندار</a></nav></div></header><main class="wrap"><article class="detail"><a class="back" href="/videos/">بازگشت به فهرست ویدئوها</a><span class="eyebrow">پروندهٔ رسانه، نه چهره</span><h1>{name}</h1><p class="meta">شبکه یا رسانهٔ منتشرکنندهٔ ویدئوها</p>{originals}<h2>ویدئوهای این رسانه</h2><div class="related-videos">{cards}</div></article></main><footer class="footer"><div class="wrap">ویدئوها · نیمانیا</div></footer></body></html>"""
+
+
 def build(figures_source,studio_source,out,allow_empty=False,relations=None,credits=None):
     figures=read_json(figures_source)
     try: studio=read_json(studio_source)
@@ -285,9 +300,20 @@ def build(figures_source,studio_source,out,allow_empty=False,relations=None,cred
     for v in rows:
         folder=out/'video'/v['id'];folder.mkdir(parents=True,exist_ok=True)
         (folder/'index.html').write_text(detail_page(v),encoding='utf-8')
+    media_groups={}
+    for v in rows:
+        for m in v.get('media',[]):
+            handle=m.get('handle') or ''
+            if HANDLE.fullmatch(handle):
+                entry=media_groups.setdefault(handle,{'media':m,'videos':[]})
+                entry['videos'].append(v)
+    for handle,entry in media_groups.items():
+        folder=out/'media'/handle
+        folder.mkdir(parents=True,exist_ok=True)
+        (folder/'index.html').write_text(media_page(entry['media'],entry['videos']),encoding='utf-8')
     (out/'recaps').mkdir(exist_ok=True)
     (out/'recaps'/'index.html').write_text('<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/videos/?filter=recaps"><link rel="canonical" href="'+SITE+'?filter=recaps"><title>جان کلام ویدئوها</title><a href="/videos/?filter=recaps">جان کلام ویدئوها</a></html>',encoding='utf-8')
-    urls=[SITE,SITE+'recaps/']+[SITE+'video/'+v['id']+'/' for v in rows]
+    urls=[SITE,SITE+'recaps/']+[SITE+'video/'+v['id']+'/' for v in rows]+[SITE+'media/'+handle+'/' for handle in media_groups]
     (out/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>'+html.escape(url)+'</loc></url>' for url in urls)+'</urlset>',encoding='utf-8')
     (out/'robots.txt').write_text('User-agent: *\nAllow: /\nSitemap: '+SITE+'sitemap.xml\n',encoding='utf-8')
     print('Videos build: '+str(len(rows))+' distinct videos, '+str(sum(bool(v['recap_fa']) for v in rows))+' with recap')
