@@ -1,24 +1,35 @@
 # ویدئوها — Nimania Videos
 
-آرشیو مستقل ویدئوهای چهره‌های پندار در **https://nimania.github.io/videos/**
+**https://nimania.github.io/videos/** · [فهرست رسانه‌ها](https://nimania.github.io/videos/media/)
 
-## معماری
-- مخزن و استقرار مستقل از `nimania/pendar`.
-- صفحهٔ یکتای هر ویدئو: `/videos/video/{youtube-id}/`، همراه با پخش از یوتیوب، مشخصات و لینک به چهره‌ها و «جان کلام».
-- گردآوری دوره‌ای، دادهٔ عمومی `https://pendar.io/data/figures.json` را در GitHub Actions می‌خواند و خروجی خودکفای `site/data/videos.json` می‌سازد. مرورگر از پندار درخواست زنده نمی‌فرستد.
-- نبود دادهٔ سالم باعث شکست انتشار می‌شود تا آرشیو قبلی با خروجی خالی جایگزین نشود.
-- پیوندهای محتوایی با پندار، جان کلام، بادبادک و پیشخوان فقط بر اساس شناسه و رابطهٔ تأییدشده هستند.
-- ویدئوها بازنشر نمی‌شوند؛ مالکیت نزد ناشر اصلی است.
+این مخزن مالک مستقل کشف و آرشیو کردن ویدئوهاست. پندار مصرف‌کنندهٔ خروجیِ آماده است و دیگر گردآورندهٔ یوتیوب برای آرشیو ویدئو اجرا نمی‌کند.
 
-## استقرار
-1. Settings → Pages → Build and deployment → **GitHub Actions**
-2. اجرای **Publish Nimania Videos** یا push جدید به main
-3. بررسی https://nimania.github.io/videos/ و صفحات ویدئو
-4. ادغام شاخهٔ پیشنهادی پندار `extract-independent-videos-20261028` پس از تأیید انتشار.
+## معماری بعد از جداسازی کامل
 
-## توسعه
-`python3 scripts/build_catalog.py --out site`
+- **منابع:** `data/sources.json`، فهرست مستقل ۴۹ منبع و ۸ رسانهٔ میزبان مشترک؛ قابل گسترش بدون تغییر مخزن پندار.
+- **گردآوری:** `scripts/collect_videos.py`، خواندن خوراک RSS/Atom یوتیوب در GitHub Actions با استفاده از `urllib` و `ElementTree`، بدون نیاز به سرویس پندار یا کلید API.
+- **حافظهٔ پایدار:** آخرین `https://nimania.github.io/videos/data/videos.json` مبنای افزایشی آرشیو است. قطع یک کانال به حذف ویدئوهای قبلی منجر نمی‌شود؛ اگر مبنا ناقص/خالی باشد انتشار متوقف می‌شود.
+- **انتشار:** `scripts/build_catalog.py --archive ... --out site` برای ساخت صفحات HTML، JSON، رسانه‌ها، نقشهٔ سایت و دادهٔ سازگار با پندار.
+- **خروجی برای پندار:** `https://nimania.github.io/videos/data/pendar-youtube-videos.json`؛ هر ردیف دارای `id`، `handle`، عنوان، تاریخ، URL منبع و شناسهٔ رسانه/شخص است. پندار این خروجی را **مصرف** می‌کند و آخرین نسخهٔ سالم را در cache نگه می‌دارد.
+- **اتصال محتوایی:** چهره‌ها و جان کلام در پندار، ناشرها و ویدئوها در این سایت؛ لینک‌ها بر مبنای شناسه و نقش ثبت‌شده.
+- **مالکیت:** ویدئوها از منبع رسمی یوتیوب پخش می‌شوند؛ نسخهٔ محلی از فایل ویدئویی نگهداری نمی‌شود.
 
-`python3 -m unittest discover -s tests -v`
+## شروع کار و آزمون
 
-`data/relations.json` پیوندهای دستیِ تأییدشده به دیگر سایت‌ها را نگه می‌دارد.
+```bash
+python3 -m unittest discover -s tests -v
+python3 scripts/collect_videos.py --previous https://nimania.github.io/videos/data/videos.json --out /tmp/nimania-videos-owned.json
+python3 scripts/build_catalog.py --archive /tmp/nimania-videos-owned.json --out site
+```
+
+GitHub Actions با push به main و نیز به صورت زمان‌بندی‌شده اجرا می‌شود؛ GitHub Pages باید روی **GitHub Actions** باشد. تاریخچهٔ موجود قبل از مهاجرت حفظ شده است.
+
+نکته: `build_catalog.build()` فقط برای آزمون‌های قدیمی با fixture محلی در کد باقی مانده؛ **مسیر تولید** صرفاً `build_owned()` و آرشیو مستقل است. برنامهٔ اصلی هیچ داده‌ای از `pendar.io/data/figures.json` دریافت نمی‌کند.
+
+## اعتبارسنجی
+
+- رسانه‌های `source-...` از اشخاص جدا هستند.
+- فقط نقشِ سردبیری تأییدشده در `data/credits.json` به‌عنوان «میزبان» یا «مهمان» ثبت می‌شود.
+- `data/relations.json` برای لینک‌های دستیِ تأییدشده است؛ از عنوان ویدئو برای ادعای محتوایی یا ایجاد نقش استفاده نمی‌شود.
+
+[قرارداد اتصال به پندار](docs/pendar-integration.md)
