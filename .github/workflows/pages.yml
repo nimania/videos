@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['index.html', 'styles.css', 'app.js', 'detail.js', 'scripts/**', 'tests/**', 'data/relations.json', 'data/credits.json', '.github/workflows/pages.yml']
+    paths: ['index.html', 'styles.css', 'app.js', 'detail.js', 'scripts/**', 'tests/**', 'data/relations.json', 'data/credits.json', 'data/sources.json', '.github/workflows/pages.yml']
   schedule:
     - cron: '13,43 * * * *'
 permissions:
@@ -24,13 +24,16 @@ jobs:
           python-version: '3.12'
       - name: Validate catalogue builder
         run: python -m unittest discover -s tests -v
-      - name: Build independent static snapshot
-        run: python scripts/build_catalog.py --out site
+      - name: Collect latest YouTube videos independently
+        run: python scripts/collect_videos.py --previous https://nimania.github.io/videos/data/videos.json --out /tmp/nimania-videos-owned.json
+      - name: Publish self-owned static snapshot and Pendar export
+        run: python scripts/build_catalog.py --archive /tmp/nimania-videos-owned.json --out site
       - name: Inspect generated archive
         run: |
           test -s site/index.html
           test -s site/data/videos.json
-          python -c 'import json; x=json.load(open("site/data/videos.json")); assert len(x["videos"]) > 0; print("Archive OK:", len(x["videos"]), "videos")'
+          test -s site/data/pendar-youtube-videos.json
+          python -c 'import json; x=json.load(open("site/data/videos.json")); assert len(x["videos"]) >= 500; print("Archive OK:", len(x["videos"]), "videos")'
       - name: Configure already enabled GitHub Pages
         uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
