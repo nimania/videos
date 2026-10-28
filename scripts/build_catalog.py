@@ -309,21 +309,83 @@ def media_directory_page(groups):
 <body><header class="masthead"><div class="wrap mast"><a class="mark" href="/videos/"><span class="mark-icon">▶</span><span>ویدئوها<small>آرشیو مستقل نیمانیا</small></span></a><nav><a href="/videos/">همهٔ ویدئوها</a><a href="https://pendar.io/">پندار</a></nav></div></header><main class="wrap"><section class="hero"><span class="eyebrow">رسانه‌ها · شبکه‌ها · ناشران ویدئو</span><h1>رسانه‌های تصویری</h1><p>شبکه و رسانه شخصیت حقیقی نیست. از این فهرست به پروندهٔ رسانه و ویدئوهای آن بروید؛ میزبان و مهمان جداگانه در هر ویدئو معرفی می‌شوند.</p></section><div class="media-directory">{''.join(cards)}</div></main><footer class="footer"><div class="wrap">ویدئوها · نیمانیا</div></footer></body></html>"""
 
 
+def export_pendar_feed(rows):
+    """Compatibility export: Pendar consumes this; Pendar NEVER discovers videos."""
+    result=[]
+    seen=set()
+    for v in rows:
+        vid=v.get('id')
+        if not VIDEO_ID.fullmatch(str(vid or '')): continue
+        for kind, members in (('person',v.get('people') or []),
+                              ('media',v.get('media') or []),
+                              ('credit',v.get('credits') or [])):
+            for member in members:
+                handle=str(member.get('handle') or '')
+                if not HANDLE.fullmatch(handle):continue
+                key=(vid,handle.lower())
+                if key in seen:continue
+                seen.add(key)
+                result.append({
+                    'id':vid,'handle':handle,'title':v.get('title') or '',
+                    'url':'https://www.youtube.com/watch?v='+vid,
+                    'published_at':v.get('published_at') or '',
+                    'thumbnail':v.get('thumbnail') or 'https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg',
+                    'channel_url':member.get('url') if kind=='media' else v.get('channel_url') or '',
+                    'source_type':'hosted' if kind=='credit' else v.get('source_type') or 'official',
+                    'video_archive_url':SITE+'video/'+vid+'/'
+                })
+    return result
+
+def build_owned(archive_source,out,allow_empty=False,credits=None):
+    raw=read_json(archive_source)
+    videos=raw.get('videos') if isinstance(raw,dict) else None
+    if not isinstance(videos,list):raise ValueError('Independent source missing videos[]')
+    ids=set()
+    credit_map=safe_credits(credits or {})
+    rows=[]
+    for original in videos:
+        if not isinstance(original,dict) or not VIDEO_ID.fullmatch(str(original.get('id') or '')):continue
+        vid=original['id']
+        if vid in ids:continue
+        ids.add(vid)
+        row=dict(original)
+        row.setdefault('people',[])
+        row.setdefault('media',[])
+        row.setdefault('related_links',[])
+        row.setdefault('recap_fa','')
+        row.setdefault('summary_fa','')
+        row.setdefault('studio_id','')
+        row.setdefault('source_type','official')
+        row.setdefault('published_at','')
+        row.setdefault('thumbnail','https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg')
+        row.setdefault('url','https://www.youtube.com/watch?v='+vid)
+        row['credits']=credit_map.get(vid,[])
+        rows.append(row)
+    if not rows and not allow_empty:raise ValueError('Refusing to publish empty independent archive')
+    rows.sort(key=lambda x:(str(x['published_at']),x['id']),reverse=True)
+    return render_rows(rows,out)
+
 def build(figures_source,studio_source,out,allow_empty=False,relations=None,credits=None):
+    """Legacy offline fixture builder; production exclusively uses build_owned."""
     figures=read_json(figures_source)
-    try: studio=read_json(studio_source)
+    try:studio=read_json(studio_source)
     except Exception as e:
         print('Studio unavailable: '+str(e),file=sys.stderr)
         studio=[]
     rows=normalize(figures,studio,relations,credits)
-    if not rows and not allow_empty: raise ValueError('Refusing to publish an empty archive')
+    if not rows and not allow_empty:raise ValueError('Refusing to publish an empty archive')
+    return render_rows(rows,out)
+
+def render_rows(rows,out):
     out.mkdir(parents=True,exist_ok=True)
     for f in ('index.html','styles.css','app.js','detail.js','.nojekyll'):
         shutil.copy2(ROOT/f,out/f)
     (out/'data').mkdir(exist_ok=True)
-    snapshot={'schema_version':1,'generated_at':dt.datetime.now(dt.timezone.utc).isoformat(),
-              'source':'Pendar published figures snapshot','videos':rows}
+    snapshot={'schema_version':2,'generated_at':dt.datetime.now(dt.timezone.utc).isoformat(),
+              'source':'Nimania Videos independent snapshot','videos':rows}
     (out/'data'/'videos.json').write_text(json.dumps(snapshot,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+    (out/'data'/'pendar-youtube-videos.json').write_text(
+        json.dumps(export_pendar_feed(rows),ensure_ascii=False,separators=(',',':')),encoding='utf-8')
     for v in rows:
         folder=out/'video'/v['id'];folder.mkdir(parents=True,exist_ok=True)
         (folder/'index.html').write_text(detail_page(v),encoding='utf-8')
@@ -350,13 +412,19 @@ def build(figures_source,studio_source,out,allow_empty=False,relations=None,cred
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--figures',default=FIGURES)
-    parser.add_argument('--studio',default=STUDIO)
+    parser.add_argument('--archive',default='',help='Independent Videos owned discovery JSON (production)')
+    parser.add_argument('--figures',default='',help='Legacy test source only')
+    parser.add_argument('--studio',default='')
     parser.add_argument('--out',type=Path,default=Path('site'))
     parser.add_argument('--allow-empty',action='store_true')
     args=parser.parse_args()
-    relations=read_json(str(ROOT/'data'/'relations.json'))
     credits=read_json(str(ROOT/'data'/'credits.json'))
-    build(args.figures,args.studio,args.out,allow_empty=args.allow_empty,relations=relations,credits=credits)
+    if args.archive:
+        build_owned(args.archive,args.out,allow_empty=args.allow_empty,credits=credits)
+    elif args.figures:
+        relations=read_json(str(ROOT/'data'/'relations.json'))
+        build(args.figures,args.studio,args.out,allow_empty=args.allow_empty,relations=relations,credits=credits)
+    else:
+        parser.error('Production requires --archive from independent Videos collector; no Pendar source fallback')
 
 if __name__=='__main__': main()
