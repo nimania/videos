@@ -154,7 +154,8 @@ def normalize(figures,studio_rows=None,relationships=None):
                 item['summary_fa']=clean_text(v.get('description_fa') or v.get('video_description'),1900)
             if not item['recap_fa'] and v.get('recap_fa'):
                 item['recap_fa']=clean_text(v.get('recap_fa'),1100)
-                item['summary_fa']=clean_text(v.get('summary_fa') or v.get('recap_fa'),1900)
+                if not item['summary_fa'] or v.get('summary_fa'):
+                    item['summary_fa']=clean_text(v.get('summary_fa') or v.get('recap_fa'),1900)
                 item['topic_fa']=clean_text(v.get('topic_fa'),200)
             elif not item['summary_fa'] and v.get('summary_fa'):
                 item['summary_fa']=clean_text(v.get('summary_fa'),1900)
