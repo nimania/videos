@@ -1,0 +1,445 @@
+{
+  "schema_version": 1,
+  "origin": "One-time migration of curated channel configuration from nimania/pendar/backend/app/figures.py, 2026-10-28; maintained in nimania/videos thereafter",
+  "sources": [
+    {
+      "handle": "iranemana_official",
+      "name_fa": "سجاد فتاحی",
+      "role_fa": "پژوهشگر، کانال «ایرانِ مانا»",
+      "aliases": [],
+      "channel_url": "https://youtube.com/@iran_mana",
+      "kind": "person"
+    },
+    {
+      "handle": "ali-alizadeh",
+      "name_fa": "علی علیزاده",
+      "role_fa": "تحلیلگر سیاسی و مدیر رسانه",
+      "aliases": [
+        "Ali Alizadeh",
+        "جدال",
+        "Jedaal",
+        "Jedaal Farsi"
+      ],
+      "channel_url": "https://youtube.com/jedaaltv",
+      "kind": "person"
+    },
+    {
+      "handle": "ali-bandari",
+      "name_fa": "علی بندری",
+      "role_fa": "پادکستر و تولیدکننده محتوا",
+      "aliases": [
+        "Ali Bandari",
+        "بی‌پلاس",
+        "بی پلاس",
+        "Bplus",
+        "BPLUS"
+      ],
+      "channel_url": "https://www.youtube.com/@BplusPodcast",
+      "kind": "person"
+    },
+    {
+      "handle": "jamshid-chalangi",
+      "name_fa": "جمشید چالنگی",
+      "role_fa": "روزنامه‌نگار و مجری",
+      "aliases": [
+        "Jamshid Chalangi"
+      ],
+      "channel_url": "https://www.youtube.com/@JamshidChalangi1",
+      "kind": "person"
+    },
+    {
+      "handle": "bozorgmehr-sharafedin",
+      "name_fa": "بزرگمهر شرف‌الدین",
+      "role_fa": "روزنامه‌نگار و پادکستر",
+      "aliases": [
+        "Bozorgmehr Sharafedin"
+      ],
+      "channel_url": "https://www.youtube.com/@BozorgmehrSharafedin",
+      "kind": "person"
+    },
+    {
+      "handle": "ehsan-mansoori",
+      "name_fa": "احسان منصوری",
+      "role_fa": "روزنامه‌نگار و تولیدکننده محتوا",
+      "aliases": [
+        "Ehsan Mansoori"
+      ],
+      "channel_url": "https://www.youtube.com/@ehsanmansoori",
+      "kind": "person"
+    },
+    {
+      "handle": "ashkan-zare",
+      "name_fa": "اشکان زارع",
+      "role_fa": "تولیدکننده محتوا",
+      "aliases": [
+        "Ashkan Zare"
+      ],
+      "channel_url": "https://www.youtube.com/@ashkan_zare",
+      "kind": "person"
+    },
+    {
+      "handle": "source-jedaal",
+      "name_fa": "جدال",
+      "role_fa": "رسانهٔ تحلیلی و گفت‌وگومحور علی علیزاده",
+      "aliases": [
+        "Jedaal",
+        "Jedaal Farsi"
+      ],
+      "channel_url": "https://youtube.com/jedaaltv",
+      "kind": "media"
+    },
+    {
+      "handle": "source-golden-simorgh",
+      "name_fa": "سیمرغ طلایی",
+      "role_fa": "رسانهٔ گفت‌وگومحور و تحلیلی",
+      "aliases": [
+        "Golden Simorgh",
+        "GoldenSimorgh"
+      ],
+      "channel_url": "https://www.youtube.com/@GoldenSimorgh-d4u",
+      "kind": "media"
+    },
+    {
+      "handle": "source-simorgh-ai-tv",
+      "name_fa": "تلویزیون هوش مصنوعی سیمرغ",
+      "role_fa": "رسانهٔ ویدئویی جامعهٔ هوش مصنوعی ایران",
+      "aliases": [
+        "Simorgh AI TV"
+      ],
+      "channel_url": "https://www.youtube.com/channel/UCrdxqvmkMQrohT0Setx--pw",
+      "kind": "media"
+    },
+    {
+      "handle": "source-didarnews",
+      "name_fa": "دیدارنیوز",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@didarnews",
+      "kind": "media"
+    },
+    {
+      "handle": "source-hamshahritv",
+      "name_fa": "همشهری تی‌وی",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@hamshahritv",
+      "kind": "media"
+    },
+    {
+      "handle": "source-iranefarda-tv",
+      "name_fa": "ایران فردا TV",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@Iranefarda_TV",
+      "kind": "media"
+    },
+    {
+      "handle": "source-kargahnet",
+      "name_fa": "کارگاه",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@Kargahnet",
+      "kind": "media"
+    },
+    {
+      "handle": "source-dogm-nabash",
+      "name_fa": "دگم نباش",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@DogmNabash",
+      "kind": "media"
+    },
+    {
+      "handle": "source-7aban",
+      "name_fa": "۷ آبان",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@7Aban_h",
+      "kind": "media"
+    },
+    {
+      "handle": "source-channel-one-tv",
+      "name_fa": "شبکه یک (Channel One TV)",
+      "role_fa": "شبکه تلویزیونی و رسانه",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@ChanelOneTVIranian",
+      "kind": "media"
+    },
+    {
+      "handle": "source-zabane-z",
+      "name_fa": "Zabane.z",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@Zabane.z",
+      "kind": "media"
+    },
+    {
+      "handle": "source-resaneh-alternative",
+      "name_fa": "رسانه آلترناتیو",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@ResanehAlternative",
+      "kind": "media"
+    },
+    {
+      "handle": "source-persian-clubhouse",
+      "name_fa": "Persian Clubhouse",
+      "role_fa": "رسانه گفت‌وگومحور",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@persianclubhouse113",
+      "kind": "media"
+    },
+    {
+      "handle": "source-fuse-podcast",
+      "name_fa": "فیوز پادکست",
+      "role_fa": "پادکست گفت‌وگومحور به میزبانی آرش نعل‌چگر",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@fusepodcast",
+      "kind": "media"
+    },
+    {
+      "handle": "source-studio-patt",
+      "name_fa": "استودیو پات",
+      "role_fa": "استودیو و رسانهٔ گفت‌وگومحور با مهمانان متعدد",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@Studio_patt",
+      "kind": "media"
+    },
+    {
+      "handle": "source-nazdiktar-talk",
+      "name_fa": "نزدیک‌تر تاک",
+      "role_fa": "گفت‌وگو و پادکست ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@nazdiktar_talk",
+      "kind": "media"
+    },
+    {
+      "handle": "source-cimorg-futures",
+      "name_fa": "سیمرغ فیوچرز",
+      "role_fa": "رسانهٔ آینده‌پژوهی و ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@CimorgFutures",
+      "kind": "media"
+    },
+    {
+      "handle": "source-azad-social",
+      "name_fa": "Azad Social",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@azadsocial",
+      "kind": "media"
+    },
+    {
+      "handle": "source-khattefarzi",
+      "name_fa": "خط فرضی",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@Khattefarzi",
+      "kind": "media"
+    },
+    {
+      "handle": "source-kaghaze-siasat",
+      "name_fa": "کاغذ سیاست",
+      "role_fa": "رسانه سیاسی و ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@kaghazesiasat",
+      "kind": "media"
+    },
+    {
+      "handle": "source-yazdan-talkshow",
+      "name_fa": "Yazdan Talkshow",
+      "role_fa": "تاک‌شو و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@yazdantalkshow",
+      "kind": "media"
+    },
+    {
+      "handle": "source-jomhouri-street",
+      "name_fa": "خیابان جمهوری",
+      "role_fa": "رسانهٔ گفت‌وگومحور با مهمانان متعدد",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@jomhouristreet",
+      "kind": "media"
+    },
+    {
+      "handle": "source-tomorrows-horizon",
+      "name_fa": "افق فردا",
+      "role_fa": "رسانهٔ گفت‌وگومحور با حاضرین و مهمانان متعدد",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@TomorrowsHorizon2024",
+      "kind": "media"
+    },
+    {
+      "handle": "source-sajadni-movies",
+      "name_fa": "فیلم سجاد نی",
+      "role_fa": "کانال ویدئویی دربارهٔ سینما و موضوعات سینمایی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@sajadniMovies",
+      "kind": "media"
+    },
+    {
+      "handle": "source-khashayar-stories",
+      "name_fa": "Khashayar Stories",
+      "role_fa": "کانال روایت و ویدئو",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@Khashayarstories",
+      "kind": "media"
+    },
+    {
+      "handle": "source-sepehris-cult",
+      "name_fa": "Sepehris Cult",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@SepehrisCult",
+      "kind": "media"
+    },
+    {
+      "handle": "ivar-farhadi",
+      "name_fa": "ایوار فرهادی",
+      "role_fa": "تولیدکننده محتوا و مجری",
+      "aliases": [
+        "Ivar Farhadi"
+      ],
+      "channel_url": "https://www.youtube.com/channel/UCpKTQ7EgNIb5nMahQLdMthw",
+      "kind": "person"
+    },
+    {
+      "handle": "ali-zia",
+      "name_fa": "علی ضیا",
+      "role_fa": "مجری و تهیه‌کننده",
+      "aliases": [
+        "Ali Zia",
+        "علی ضیاء",
+        "Baziya",
+        "بازیا"
+      ],
+      "channel_url": "https://www.youtube.com/channel/UC8LVufbnNQkU20_fyycIL7A",
+      "kind": "person"
+    },
+    {
+      "handle": "source-chanteh-podcast",
+      "name_fa": "Chanteh Podcast",
+      "role_fa": "پادکست ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/channel/UCvCbxRVG7kyB0uwSOK0eLnQ",
+      "kind": "media"
+    },
+    {
+      "handle": "source-farhikhtegan-online",
+      "name_fa": "فرهیختگان آنلاین",
+      "role_fa": "بخش آنلاین و ویدئویی روزنامهٔ فرهیختگان",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/channel/UCq05uUbwwT1YtxU26Cfwdfw",
+      "kind": "media"
+    },
+    {
+      "handle": "source-manoto-tv",
+      "name_fa": "من‌وتو",
+      "role_fa": "شبکه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/channel/UCnUdm0u-2FRffBnxQYHuTHA",
+      "kind": "media"
+    },
+    {
+      "handle": "source-rok-show",
+      "name_fa": "Rok Show",
+      "role_fa": "برنامه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/channel/UCeLPadoZ4vXAM13iyvivhBg",
+      "kind": "media"
+    },
+    {
+      "handle": "source-pump-vod",
+      "name_fa": "Pump VOD",
+      "role_fa": "رسانه و کانال ویدئویی",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/channel/UCMPdfQnOy5Vu07j6C141FWQ",
+      "kind": "media"
+    },
+    {
+      "handle": "masoud-behnoud",
+      "name_fa": "مسعود بهنود",
+      "role_fa": "روزنامه‌نگار و نویسنده",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@mbehnoud",
+      "kind": "person"
+    },
+    {
+      "handle": "nima-afshar-naderi",
+      "name_fa": "نیما افشارنادری",
+      "role_fa": "تولیدکننده محتوا و میزبان «جان کلام»",
+      "aliases": [
+        "نیما افشار نادری",
+        "Nima Afshar Naderi"
+      ],
+      "channel_url": "https://www.youtube.com/channel/UCYDOVO7EpX3QNEf9Ddk1-AQ",
+      "kind": "person"
+    },
+    {
+      "handle": "sahandiranmehr",
+      "name_fa": "سهند ایرانمهر",
+      "role_fa": "پژوهشگر روابط بین‌الملل",
+      "aliases": [],
+      "channel_url": "https://youtube.com/@sahandiranmehr",
+      "kind": "person"
+    },
+    {
+      "handle": "darwinsabouri",
+      "name_fa": "داروین صبوری",
+      "role_fa": "جامعه‌شناس",
+      "aliases": [],
+      "channel_url": "https://youtube.com/@darwinsabouri",
+      "kind": "person"
+    },
+    {
+      "handle": "DrAzarakhshMokri",
+      "name_fa": "آذرخش مکری",
+      "role_fa": "روان‌پزشک و مدرس دانشگاه",
+      "aliases": [],
+      "channel_url": "https://youtube.com/@DrAzarakhshMokriOfficial",
+      "kind": "person"
+    },
+    {
+      "handle": "bahadaf",
+      "name_fa": "فرهنگ هلاکویی",
+      "role_fa": "روان‌شناس و مدرس",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/@dr.holakoueeofficialchannel",
+      "kind": "person"
+    },
+    {
+      "handle": "Imansoleymaniamiri",
+      "name_fa": "ایمان سلیمانی امیری",
+      "role_fa": "نویسنده و منتقد دین",
+      "aliases": [],
+      "channel_url": "https://www.youtube.com/channel/UCTeJ9xtTseVNYCRnmV7Mtdw",
+      "kind": "person"
+    },
+    {
+      "handle": "Mardihamorteza",
+      "name_fa": "مرتضی مردیها",
+      "role_fa": "پژوهشگر فلسفه و علوم انسانی",
+      "aliases": [],
+      "channel_url": "https://youtube.com/@MortazaMardiha",
+      "kind": "person"
+    },
+    {
+      "handle": "mohsensazegara",
+      "name_fa": "محسن سازگارا",
+      "role_fa": "تحلیلگر سیاسی",
+      "aliases": [],
+      "channel_url": "https://youtube.com/@MohsenSazegara",
+      "kind": "person"
+    }
+  ],
+  "shared_hosts": [
+    "https://www.youtube.com/@Parsi_Live",
+    "https://www.youtube.com/@Abdi_media4",
+    "https://youtube.com/jedaaltv",
+    "https://www.youtube.com/@Studio_patt",
+    "https://www.youtube.com/@fusepodcast",
+    "https://www.youtube.com/@jomhouristreet",
+    "https://www.youtube.com/@TomorrowsHorizon2024",
+    "https://www.youtube.com/@GoldenSimorgh-d4u"
+  ]
+}
