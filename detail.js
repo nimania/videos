@@ -16,12 +16,13 @@
   for(const l of v.related_links||[])if(l&&validURL(l.url)&&l.title)links.push(l);
   if(links.length)sections.push('<section class="detail-context"><h2>متن‌ها و منابع مرتبط</h2><div class="detail-links">'+links.filter(l=>validURL(l.url)).map(l=>'<a href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+esc(l.title)+'</a>').join('')+'</div></section>');
   const handles=new Set((v.people||[]).map(p=>String(p.handle||'').toLowerCase()).filter(Boolean));
-  if(handles.size){
-   const related=all.filter(x=>x.id!==id&&(x.people||[]).some(p=>handles.has(String(p.handle||'').toLowerCase())))
+  const mediaHandles=new Set((v.media||[]).map(p=>String(p.handle||'').toLowerCase()).filter(Boolean));
+  if(handles.size||mediaHandles.size){
+   const related=all.filter(x=>x.id!==id&&((x.people||[]).some(p=>handles.has(String(p.handle||'').toLowerCase()))||(x.media||[]).some(p=>mediaHandles.has(String(p.handle||'').toLowerCase()))))
     .sort((a,b)=>String(b.published_at||'').localeCompare(String(a.published_at||''))).slice(0,6);
    if(related.length){
     const cards=related.map(x=>'<a class="related-video" href="/videos/video/'+encodeURIComponent(x.id)+'/"><img src="https://i.ytimg.com/vi/'+encodeURIComponent(x.id)+'/mqdefault.jpg" alt="" loading="lazy"><span>'+esc(x.title)+'</span></a>').join('');
-    sections.push('<section class="detail-context"><h2>ویدئوهای دیگر مرتبط با این چهره‌ها</h2><div class="related-videos">'+cards+'</div></section>');
+    sections.push('<section class="detail-context"><h2>ویدئوهای دیگر از این چهره‌ها یا رسانه</h2><div class="related-videos">'+cards+'</div></section>');
    }
   }
   el.innerHTML=sections.join('');
