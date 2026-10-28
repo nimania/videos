@@ -338,6 +338,7 @@ def build(figures_source,studio_source,out,allow_empty=False,relations=None,cred
         folder=out/'media'/handle
         folder.mkdir(parents=True,exist_ok=True)
         (folder/'index.html').write_text(media_page(entry['media'],entry['videos']),encoding='utf-8')
+    (out/'media').mkdir(exist_ok=True)
     (out/'media'/'index.html').write_text(media_directory_page(media_groups),encoding='utf-8')
     (out/'recaps').mkdir(exist_ok=True)
     (out/'recaps'/'index.html').write_text('<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/videos/?filter=recaps"><link rel="canonical" href="'+SITE+'?filter=recaps"><title>جان کلام ویدئوها</title><a href="/videos/?filter=recaps">جان کلام ویدئوها</a></html>',encoding='utf-8')
