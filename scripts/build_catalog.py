@@ -250,7 +250,7 @@ def detail_page(v):
     for p in v['people']:
         handle=p['handle']
         if HANDLE.fullmatch(handle):
-            url='https://pendar.io/@'+handle
+            url='https://pendar.io/@'+handle+'/'
             p_links.append('<a class="context-link" href="'+html.escape(url,quote=True)+'"><span>👤</span><strong>'+html.escape(p['name_fa'])+'</strong><small>پرونده و مطالب این چهره در پندار</small></a>')
     people_section='<section class="detail-context"><h2>چهره‌های مرتبط</h2><div class="context-grid">'+''.join(p_links)+'</div></section>' if p_links else ''
     channel_name=html.escape(v.get('channel_name') or '',quote=True)
@@ -274,7 +274,7 @@ def detail_page(v):
         role_name='میزبان' if credit['role']=='host' else 'مهمان'
         name=html.escape(credit['name_fa'])
         handle=credit.get('handle') or ''
-        url='https://pendar.io/@'+handle if HANDLE.fullmatch(handle) else ''
+        url='https://pendar.io/@'+handle+'/' if HANDLE.fullmatch(handle) else ''
         start='<a class="context-link" href="'+html.escape(url,quote=True)+'">' if url else '<div class="context-link">'
         end='</a>' if url else '</div>'
         credit_cards.append(start+'<span>👤</span><strong>'+name+'</strong><small>'+role_name+' برنامه</small>'+end)
