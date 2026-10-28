@@ -31,10 +31,8 @@ jobs:
           test -s site/index.html
           test -s site/data/videos.json
           python -c 'import json; x=json.load(open("site/data/videos.json")); assert len(x["videos"]) > 0; print("Archive OK:", len(x["videos"]), "videos")'
-      - name: Configure or enable GitHub Pages
+      - name: Configure already enabled GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site
