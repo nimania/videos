@@ -282,6 +282,17 @@ def media_page(media, rows):
 <body><header class="masthead"><div class="wrap mast"><a class="mark" href="/videos/"><span class="mark-icon">▶</span><span>ویدئوها<small>آرشیو مستقل نیمانیا</small></span></a><nav><a href="/videos/">ویدئوها</a><a href="https://pendar.io/">پندار</a></nav></div></header><main class="wrap"><article class="detail"><a class="back" href="/videos/">بازگشت به فهرست ویدئوها</a><span class="eyebrow">پروندهٔ رسانه، نه چهره</span><h1>{name}</h1><p class="meta">شبکه یا رسانهٔ منتشرکنندهٔ ویدئوها</p>{originals}<h2>ویدئوهای این رسانه</h2><div class="related-videos">{cards}</div></article></main><footer class="footer"><div class="wrap">ویدئوها · نیمانیا</div></footer></body></html>"""
 
 
+def media_directory_page(groups):
+    """Index only genuine publisher records and their verified video counts."""
+    cards=[]
+    for handle,info in sorted(groups.items(),key=lambda pair:(-len(pair[1]['videos']),pair[1]['media']['name_fa'])):
+        name=html.escape(info['media']['name_fa'])
+        count=len(info['videos'])
+        cards.append('<a class="context-link" href="/videos/media/'+handle+'/"><span>📺</span><strong>'+name+'</strong><small>'+str(count)+' ویدئو · مشاهدهٔ پروندهٔ رسانه</small></a>')
+    return f"""<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="فهرست رسانه‌های تصویری و شبکه‌های منتشرکنندهٔ ویدئو با پرونده‌های مستقل"><link rel="canonical" href="{SITE}media/"><link rel="stylesheet" href="/videos/styles.css"><title>رسانه‌های تصویری | ویدئوها</title></head>
+<body><header class="masthead"><div class="wrap mast"><a class="mark" href="/videos/"><span class="mark-icon">▶</span><span>ویدئوها<small>آرشیو مستقل نیمانیا</small></span></a><nav><a href="/videos/">همهٔ ویدئوها</a><a href="https://pendar.io/">پندار</a></nav></div></header><main class="wrap"><section class="hero"><span class="eyebrow">رسانه‌ها · شبکه‌ها · ناشران ویدئو</span><h1>رسانه‌های تصویری</h1><p>شبکه و رسانه شخصیت حقیقی نیست. از این فهرست به پروندهٔ رسانه و ویدئوهای آن بروید؛ میزبان و مهمان جداگانه در هر ویدئو معرفی می‌شوند.</p></section><div class="media-directory">{''.join(cards)}</div></main><footer class="footer"><div class="wrap">ویدئوها · نیمانیا</div></footer></body></html>"""
+
+
 def build(figures_source,studio_source,out,allow_empty=False,relations=None,credits=None):
     figures=read_json(figures_source)
     try: studio=read_json(studio_source)
@@ -311,9 +322,10 @@ def build(figures_source,studio_source,out,allow_empty=False,relations=None,cred
         folder=out/'media'/handle
         folder.mkdir(parents=True,exist_ok=True)
         (folder/'index.html').write_text(media_page(entry['media'],entry['videos']),encoding='utf-8')
+    (out/'media'/'index.html').write_text(media_directory_page(media_groups),encoding='utf-8')
     (out/'recaps').mkdir(exist_ok=True)
     (out/'recaps'/'index.html').write_text('<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/videos/?filter=recaps"><link rel="canonical" href="'+SITE+'?filter=recaps"><title>جان کلام ویدئوها</title><a href="/videos/?filter=recaps">جان کلام ویدئوها</a></html>',encoding='utf-8')
-    urls=[SITE,SITE+'recaps/']+[SITE+'video/'+v['id']+'/' for v in rows]+[SITE+'media/'+handle+'/' for handle in media_groups]
+    urls=[SITE,SITE+'recaps/',SITE+'media/']+[SITE+'video/'+v['id']+'/' for v in rows]+[SITE+'media/'+handle+'/' for handle in media_groups]
     (out/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join('<url><loc>'+html.escape(url)+'</loc></url>' for url in urls)+'</urlset>',encoding='utf-8')
     (out/'robots.txt').write_text('User-agent: *\nAllow: /\nSitemap: '+SITE+'sitemap.xml\n',encoding='utf-8')
     print('Videos build: '+str(len(rows))+' distinct videos, '+str(sum(bool(v['recap_fa']) for v in rows))+' with recap')
