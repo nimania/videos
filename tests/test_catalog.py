@@ -78,6 +78,14 @@ class CatalogueTests(unittest.TestCase):
   self.assertIn('رسانه و منبع انتشار',page)
   self.assertIn('شبکه یک (Channel One TV)',page)
   self.assertNotIn('figure/source-channel-one-tv',page)
+  self.assertIn('href="/videos/media/source-channel-one-tv/"',page)
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp);fig=p/'figures.json';studio=p/'studio.json';out=p/'out'
+   fig.write_text(json.dumps(self.figures),encoding='utf-8');studio.write_text('[]')
+   mod.build(str(fig),str(studio),out)
+   media_page=(out/'media'/'source-channel-one-tv'/'index.html').read_text(encoding='utf-8')
+   self.assertIn('شبکه یک (Channel One TV)',media_page)
+   self.assertIn('/videos/video/abcdefghijk/',media_page)
  def test_specific_video_host_and_guest(self):
   extra={'abcdefghijk':[{'name_fa':'محمد منظرپور','role':'host','handle':'mohammad-manzarpour'},
                          {'name_fa':'بهمن جلدی','role':'guest','handle':'bahman-jeldi'}]}
